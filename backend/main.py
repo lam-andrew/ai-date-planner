@@ -6,6 +6,7 @@ import openai
 from typing import List
 from pydantic import BaseModel
 from dotenv import load_dotenv
+from place_mappings import CATEGORY_MAPPING
 
 # Load environment variables from .env file
 load_dotenv()
@@ -66,20 +67,19 @@ def fetch_places(latitude: float, longitude: float, category: str, radius: int =
     :return: List of places with names, addresses, ratings, and types
     """
 
+    mapped_category = CATEGORY_MAPPING.get(category, "restaurant")
+
     url = "https://places.googleapis.com/v1/places:searchNearby"
 
     # Construct the request payload
     payload = {
         "languageCode": "en",
         "regionCode": "US",
-        "includedTypes": [category],  # Category type (e.g., "restaurant")
+        "includedTypes": [mapped_category],  # Category type (e.g., "restaurant")
         "maxResultCount": max_results,
         "locationRestriction": {
             "circle": {
-                "center": {
-                    "latitude": latitude,
-                    "longitude": longitude
-                },
+                "center": {"latitude": latitude, "longitude": longitude},
                 "radius": radius
             }
         },

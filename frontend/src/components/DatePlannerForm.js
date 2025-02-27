@@ -1,8 +1,9 @@
 import React, { useState } from "react";
-import { TextField, Button, Chip, Slider, Stepper, Step, StepLabel, Box, Autocomplete } from "@mui/material";
+import { TextField, Button, Chip, Slider, Stepper, Step, StepLabel, Box } from "@mui/material";
+import { Autocomplete } from "@react-google-maps/api";
 import { generateDatePlan } from "../api";
 
-// List of options for selection
+
 const foodOptions = ["Italian", "Sushi", "Vegan", "Mexican", "Steakhouse"];
 const activityOptions = ["Outdoor", "Movie", "Museum", "Live Music", "Scenic View"];
 const dateTypes = ["Romantic", "Casual", "First Date", "Anniversary"];
@@ -19,8 +20,38 @@ const DatePlannerForm = () => {
 
     const [itinerary, setItinerary] = useState("");
     const [loading, setLoading] = useState(false);
+    const autocompleteRef = React.useRef(null);
 
-    // Handle Input Changes
+    // Handle Location Selection
+    const handlePlaceSelect = () => {
+        if (autocompleteRef.current) {
+            const place = autocompleteRef.current.getPlace();
+            if (place && place.address_components) {
+                let city = "";
+                let state = "";
+                let country = "";
+    
+                // Loop through address components to find city, state, and country
+                place.address_components.forEach(component => {
+                    if (component.types.includes("locality")) {
+                        city = component.long_name;  // Get city name
+                    }
+                    if (component.types.includes("administrative_area_level_1")) {
+                        state = component.short_name; // Get state abbreviation
+                    }
+                    if (component.types.includes("country")) {
+                        country = component.long_name; // Get country name
+                    }
+                });
+    
+                // Format the location as "City, State, Country" (if available)
+                const formattedLocation = `${city}${state ? ", " + state : ""}${country ? ", " + country : ""}`;
+                setFormData({ ...formData, location: formattedLocation });
+            }
+        }
+    };    
+
+    // Handle Other Input Changes
     const handleChange = (name, value) => {
         setFormData({ ...formData, [name]: value });
     };
@@ -50,11 +81,16 @@ const DatePlannerForm = () => {
 
             {activeStep === 0 && (
                 <Autocomplete
-                    freeSolo
-                    options={[]} // TODO: Integrate Google Places API
-                    onChange={(event, value) => handleChange("location", value)}
-                    renderInput={(params) => <TextField {...params} label="Enter Location" fullWidth />}
-                />
+                    onLoad={(auto) => (autocompleteRef.current = auto)}
+                    onPlaceChanged={handlePlaceSelect}
+                >
+                    <TextField
+                        label="Enter Location"
+                        fullWidth
+                        value={formData.location}
+                        onChange={(e) => handleChange("location", e.target.value)}
+                    />
+                </Autocomplete>
             )}
 
             {activeStep === 1 && (
