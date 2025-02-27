@@ -1,12 +1,24 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import { TextField, Button, Chip, Slider, Stepper, Step, StepLabel, Box } from "@mui/material";
 import { Autocomplete } from "@react-google-maps/api";
 import { generateDatePlan } from "../api";
 
-
-const foodOptions = ["Italian", "Sushi", "Vegan", "Mexican", "Steakhouse"];
-const activityOptions = ["Outdoor", "Movie", "Museum", "Live Music", "Scenic View"];
 const dateTypes = ["Romantic", "Casual", "First Date", "Anniversary"];
+
+// Food Options from CATEGORY_MAPPING
+const foodOptions = [
+    "Bar", "Cafe", "Coffee Shop", "Dessert Shop", "Fine Dining", "French", "Greek", "Italian",
+    "Japanese", "Korean", "Mexican", "Pizza", "Seafood", "Spanish", "Steakhouse", "Sushi",
+    "Thai", "Vegan", "Vegetarian"
+];
+
+// Activity Options from CATEGORY_MAPPING
+const activityOptions = [
+    "Art Gallery", "Museum", "Performing Arts Theater", "Amusement Park", "Aquarium",
+    "Bowling Alley", "Comedy Club", "Concert Hall", "Karaoke", "Movie Theater",
+    "Night Club", "Observation Deck", "Planetarium", "Zoo", "Botanical Garden",
+    "Hiking Area", "Park", "Picnic Ground"
+];
 
 const DatePlannerForm = () => {
     const [activeStep, setActiveStep] = useState(0);
@@ -20,7 +32,7 @@ const DatePlannerForm = () => {
 
     const [itinerary, setItinerary] = useState("");
     const [loading, setLoading] = useState(false);
-    const autocompleteRef = React.useRef(null);
+    const autocompleteRef = useRef(null);
 
     // Handle Location Selection
     const handlePlaceSelect = () => {
@@ -30,35 +42,37 @@ const DatePlannerForm = () => {
                 let city = "";
                 let state = "";
                 let country = "";
-    
-                // Loop through address components to find city, state, and country
+
                 place.address_components.forEach(component => {
-                    if (component.types.includes("locality")) {
-                        city = component.long_name;  // Get city name
-                    }
-                    if (component.types.includes("administrative_area_level_1")) {
-                        state = component.short_name; // Get state abbreviation
-                    }
-                    if (component.types.includes("country")) {
-                        country = component.long_name; // Get country name
-                    }
+                    if (component.types.includes("locality")) city = component.long_name;
+                    if (component.types.includes("administrative_area_level_1")) state = component.short_name;
+                    if (component.types.includes("country")) country = component.long_name;
                 });
-    
-                // Format the location as "City, State, Country" (if available)
+
                 const formattedLocation = `${city}${state ? ", " + state : ""}${country ? ", " + country : ""}`;
                 setFormData({ ...formData, location: formattedLocation });
             }
         }
-    };    
+    };
 
     // Handle Other Input Changes
     const handleChange = (name, value) => {
         setFormData({ ...formData, [name]: value });
     };
 
+    // Toggle selection for multi-choice fields (Food & Activities)
+    const handleToggleSelection = (field, item) => {
+        setFormData(prev => ({
+            ...prev,
+            [field]: prev[field].includes(item)
+                ? prev[field].filter(f => f !== item)
+                : [...prev[field], item]
+        }));
+    };
+
     // Handle Step Navigation
-    const handleNext = () => setActiveStep((prevStep) => prevStep + 1);
-    const handleBack = () => setActiveStep((prevStep) => prevStep - 1);
+    const handleNext = () => setActiveStep(prevStep => prevStep + 1);
+    const handleBack = () => setActiveStep(prevStep => prevStep - 1);
 
     // Submit the Form
     const handleSubmit = async () => {
@@ -110,17 +124,12 @@ const DatePlannerForm = () => {
 
             {activeStep === 2 && (
                 <Box>
-                    {foodOptions.map((food) => (
+                    <h3>Select Food Preferences</h3>
+                    {foodOptions.map(food => (
                         <Chip
                             key={food}
                             label={food}
-                            onClick={() =>
-                                handleChange("food_preferences",
-                                    formData.food_preferences.includes(food)
-                                        ? formData.food_preferences.filter(f => f !== food)
-                                        : [...formData.food_preferences, food]
-                                )
-                            }
+                            onClick={() => handleToggleSelection("food_preferences", food)}
                             sx={{ m: 1, backgroundColor: formData.food_preferences.includes(food) ? "primary.light" : "default" }}
                         />
                     ))}
@@ -129,17 +138,12 @@ const DatePlannerForm = () => {
 
             {activeStep === 3 && (
                 <Box>
-                    {activityOptions.map((activity) => (
+                    <h3>Select Activities</h3>
+                    {activityOptions.map(activity => (
                         <Chip
                             key={activity}
                             label={activity}
-                            onClick={() =>
-                                handleChange("activity_preferences",
-                                    formData.activity_preferences.includes(activity)
-                                        ? formData.activity_preferences.filter(a => a !== activity)
-                                        : [...formData.activity_preferences, activity]
-                                )
-                            }
+                            onClick={() => handleToggleSelection("activity_preferences", activity)}
                             sx={{ m: 1, backgroundColor: formData.activity_preferences.includes(activity) ? "primary.light" : "default" }}
                         />
                     ))}
@@ -148,6 +152,7 @@ const DatePlannerForm = () => {
 
             {activeStep === 4 && (
                 <Box>
+                    <h3>Budget</h3>
                     <Slider
                         value={formData.budget}
                         onChange={(e, newValue) => handleChange("budget", newValue)}
@@ -162,6 +167,7 @@ const DatePlannerForm = () => {
 
             {activeStep === 5 && (
                 <Box>
+                    <h3>Confirm Your Selections</h3>
                     <p><strong>Location:</strong> {formData.location}</p>
                     <p><strong>Date Type:</strong> {formData.date_type}</p>
                     <p><strong>Food Preferences:</strong> {formData.food_preferences.join(", ")}</p>

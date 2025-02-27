@@ -108,3 +108,95 @@ uvicorn main:app --reload
 ```
 API will be available at: http://127.0.0.1:8000
 Swagger UI: http://127.0.0.1:8000/docs
+
+
+## 📜 Frontend
+### Overview
+The frontend is a React application that provides a step-by-step wizard interface for users to input their date preferences and receive an AI-generated date plan from the backend.
+
+- Framework: React.js
+- UI Library: Material-UI
+- State Management: React Hooks (useState, useRef)
+- API Calls: Axios
+- Google API Integration: Places Autocomplete for location selection
+
+### 🛠 Components
+**1️⃣ `DatePlannerForm.js` - The Core Component**
+📂 `src/components/DatePlannerForm.js`
+This component handles user input using a multi-step form with a Material-UI Stepper.
+
+🚀 Features:
+✅ Location Selection → Uses Google Places Autocomplete
+✅ Food & Activity Selection → Uses Material-UI Chips
+✅ Stepper Navigation → Guides users through the input process
+✅ Final Confirmation Step → Users review their choices before submission
+
+**2️⃣ `api.js` - API Handling**
+📂 `src/api.js`
+This file handles API requests between the frontend and backend.
+
+Function:
+```
+export const generateDatePlan = async (preferences) => {
+    try {
+        const response = await axios.post("http://127.0.0.1:8000/generate-date-plan/", preferences, {
+            headers: { "Content-Type": "application/json" },
+        });
+        return response.data;
+    } catch (error) {
+        console.error("Error fetching date plan:", error);
+        return { itinerary: "Error generating itinerary. Please try again later." };
+    }
+};
+```
+- Sends user preferences to FastAPI
+- Receives an AI-generated itinerary
+- Handles errors gracefully
+
+**3️⃣ `App.js` - Root Component**
+📂 `src/App.js`
+This is the entry point of the app, where we load Google Maps API and render DatePlannerForm.
+
+Functionality:
+```
+import React from "react";
+import { LoadScript } from "@react-google-maps/api";
+import DatePlannerForm from "./components/DatePlannerForm";
+
+const GOOGLE_MAPS_API_KEY = process.env.REACT_APP_GOOGLE_PLACES_API_KEY;
+
+function App() {
+    return (
+        <LoadScript googleMapsApiKey={GOOGLE_MAPS_API_KEY} libraries={["places"]}>
+            <DatePlannerForm />
+        </LoadScript>
+    );
+}
+
+export default App;
+```
+- Loads Google Maps API only once
+- Wraps the DatePlannerForm to provide location autocomplete support
+
+### ⚡ Key Features & Functionality
+**1️⃣ Multi-Step Form with Stepper Navigation**
+- Uses Stepper from Material-UI
+- Each step collects different user preferences
+- Users can navigate back and forth
+
+**2️⃣ Google Places Autocomplete for Location Selection**
+- Allows users to search and select a city
+- Extracts city, state, and country
+
+**3️⃣ Food & Activity Selection with Clickable Chips**
+- Replaces dropdowns with Material-UI Chip components
+- Clicking a chip toggles selection
+
+**4️⃣ Confirmation Page Before Submission**
+- Users can review their choices before finalizing
+- Prevents mistakes
+
+### 🎯 Running the Frontend
+```
+npm start
+```
