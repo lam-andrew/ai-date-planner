@@ -20,7 +20,8 @@ app = FastAPI(
 )
 
 # OpenAI API Key
-OPENAI_API_KEY = "future_openai_api_key"
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+client = openai.OpenAI(api_key=OPENAI_API_KEY)
 
 # Google Places API Key
 GOOGLE_PLACES_API_KEY = os.getenv("GOOGLE_PLACES_API_KEY")
@@ -118,12 +119,17 @@ def generate_ai_plan(places: list, preferences: DatePreferences) -> str:
 
     Provide a structured date itinerary.
     """
-    response = openai.ChatCompletion.create(
-        model="gpt-4",
-        messages=[{"role": "user", "content": prompt}],
-        temperature=0.7
-    )
-    return response.choices[0].message["content"]
+    try:
+        chat_completion = client.chat.completions.create(
+            model="gpt-4o",
+            messages=[{"role": "user", "content": prompt}],
+            temperature=0.7
+        )
+        return chat_completion.choices[0].message.content
+
+    except Exception as e:
+        print(f"OpenAI API Error: {e}")
+        return "Error generating AI itinerary. Please try again later."
 
 
 def get_lat_long(location: str):
