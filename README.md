@@ -201,6 +201,33 @@ export default App;
 npm start
 ```
 
+## Run App locally via Docker
+1️⃣ Export the Environment Variables Locally
+Before running docker build, export the required environment variables:
+```
+export REACT_APP_GOOGLE_PLACES_API_KEY="your-google-places-api-key"
+export REACT_APP_API_URL="http://localhost:8000"
+export GOOGLE_PLACES_API_KEY="your-google-places-api-key"
+export OPENAI_API_KEY="your-openai-api-key"
+```
+
+2️⃣ Build the Docker Image Using the Local Variables
+Now, modify the docker build command to use --build-arg with standard shell syntax:
+```
+docker buildx build --platform linux/amd64 \
+    --build-arg REACT_APP_GOOGLE_PLACES_API_KEY=$REACT_APP_GOOGLE_PLACES_API_KEY \
+    --build-arg REACT_APP_API_URL=$REACT_APP_API_URL \
+    --build-arg GOOGLE_PLACES_API_KEY=$GOOGLE_PLACES_API_KEY \
+    --build-arg OPENAI_API_KEY=$OPENAI_API_KEY \
+    -t my-app .
+```
+
+3️⃣ Run the Docker Container on port 8000
+```
+docker run -d -p 8000:8000 my-app
+```
+
+
 
 # Cloud Deployment
 
