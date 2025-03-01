@@ -7,38 +7,60 @@ on:
 
 jobs:
   deploy:
-    name: Deploy to AWS EB
+    name: Deploy to AWS Elastic Beanstalk
     runs-on: ubuntu-latest
 
     steps:
       - name: 🚀 Checkout Repository
         uses: actions/checkout@v4
 
-      - name: 🔹 Set up AWS CLI
+      # ✅ Install AWS CLI
+      - name: 🔹 Install AWS CLI
         run: |
-          sudo apt-get install -y awscli
+          curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+          unzip awscliv2.zip
+          sudo ./aws/install
+          aws --version
 
-      - name: 🔹 Login to AWS
+      # ✅ Authenticate AWS CLI
+      - name: 🔹 Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      # ✅ Authenticate Docker with Amazon ECR
+      - name: 🔹 Login to Amazon ECR
         run: |
-          aws configure set aws_access_key_id ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws configure set aws_secret_access_key ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws configure set region ${{ secrets.AWS_REGION }}
+          aws ecr get-login-password --region ${{ secrets.AWS_REGION }} | docker login --username AWS --password-stdin ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com
 
-      - name: 🐳 Build & Tag Docker Image (Inject ENV Variables)
+      # ✅ Build & Push Docker Image
+      - name: 🐳 Build & Push Docker Image to ECR
         run: |
           docker buildx build --platform linux/amd64 \
             --build-arg REACT_APP_GOOGLE_PLACES_API_KEY=${{ secrets.REACT_APP_GOOGLE_PLACES_API_KEY }} \
             --build-arg REACT_APP_API_URL=${{ secrets.REACT_APP_API_URL }} \
             --build-arg OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }} \
             -t my-app .
+          
           docker tag my-app:latest ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/my-app:latest
+          docker push ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/my-app:latest
 
-      - name: 📦 Push Docker Image to AWS Elastic Beanstalk
+      # ✅ Deploy to Elastic Beanstalk
+      - name: 📦 Deploy Docker Image to AWS Elastic Beanstalk
         run: |
-          docker tag my-app:latest my-app:latest
-          docker save my-app:latest | gzip > my-app.tar.gz
-          aws elasticbeanstalk create-application-version --application-name ${{ secrets.EB_APPLICATION_NAME }} --version-label "v-${{ github.run_id }}" --source-bundle S3Bucket="my-bucket",S3Key="my-app.tar.gz"
+          eb init ${{ secrets.EB_APPLICATION_NAME }} --region ${{ secrets.AWS_REGION }} --platform "Docker"
+          eb use ${{ secrets.EB_ENVIRONMENT_NAME }}
+          
+          eb setenv REACT_APP_GOOGLE_PLACES_API_KEY=${{ secrets.REACT_APP_GOOGLE_PLACES_API_KEY }} \
+                    REACT_APP_API_URL=${{ secrets.REACT_APP_API_URL }} \
+                    OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}
 
-      - name: 🚀 Deploy to Elastic Beanstalk
+          eb deploy
+
+      # ✅ Fetch Logs for Debugging
+      - name: 🔍 Fetch Elastic Beanstalk Logs
         run: |
-          aws elasticbeanstalk update-environment --environment-name ${{ secrets.EB_ENVIRONMENT_NAME }} --version-label "v-${{ github.run_id }}"
+          eb logs > eb-logs.txt
+          cat eb-logs.txt
