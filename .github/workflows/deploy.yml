@@ -1,47 +1,68 @@
-name: Deploy to AWS Elastic Beanstalk
+name: CI/CD Pipeline for AI Date Planner
 
 on:
   push:
     branches:
-      - main  # Deploys when pushing to the main branch
+      - main  # Deploys the app when code is pushed to the main branch
 
 jobs:
-  deploy:
-    name: Deploy to AWS Elastic Beanstalk
+  build:
+    name: Build & Test Application
     runs-on: ubuntu-latest
 
     steps:
-      - name: 🚀 Checkout Repository
-        uses: actions/checkout@v4
+      - name: 🚀 Checkout repository
+        uses: actions/checkout@v3
 
-      # ✅ Fix AWS CLI Install & Dependency Issues
-      - name: 🔹 Install & Fix AWS CLI Dependencies
+      # ✅ Install Node.js for Frontend Build
+      - name: 🔹 Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+
+      # ✅ Install & Build Frontend
+      - name: 📦 Install Frontend Dependencies
+        working-directory: frontend
+        run: npm install
+
+      - name: 🔨 Build Frontend
+        working-directory: frontend
+        run: npm run build
+
+      # ✅ Install Python Dependencies for Backend
+      - name: 🐍 Install Backend Dependencies
+        working-directory: backend
         run: |
-          sudo apt update
-          sudo apt install -y python3-pip
-          python3 -m pip install --upgrade pip setuptools wheel
-          python3 -m pip install --upgrade awscli botocore s3transfer
-          echo "$HOME/.local/bin" >> $GITHUB_PATH
-          aws --version
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
 
-      # ✅ Authenticate AWS CLI
+  deploy:
+    name: Deploy Application to AWS
+    needs: build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 🚀 Checkout repository
+        uses: actions/checkout@v3
+
+      # ✅ Authenticate with AWS
       - name: 🔹 Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v2
+        uses: aws-actions/configure-aws-credentials@v1
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ secrets.AWS_REGION }}
 
       # ✅ Install AWS Elastic Beanstalk CLI
-      - name: 🔹 Install AWS EB CLI
+      - name: 🔹 Install AWS Elastic Beanstalk CLI
         run: |
           sudo apt update && sudo apt install -y python3-pip
+          python3 -m pip install --upgrade pip
           python3 -m pip install awsebcli --upgrade --user
           echo "$HOME/.local/bin" >> $GITHUB_PATH
-          eb --version  # Verify EB CLI installation
 
       # ✅ Ensure ECR Repository Exists
-      - name: 🔹 Ensure ECR Repository Exists
+      - name: 🏗️ Ensure ECR Repository Exists
         run: |
           aws ecr describe-repositories --repository-names my-app || \
           aws ecr create-repository --repository-name my-app || echo "Repository already exists."
@@ -49,7 +70,8 @@ jobs:
       # ✅ Authenticate Docker with Amazon ECR
       - name: 🔹 Login to Amazon ECR
         run: |
-          aws ecr get-login-password --region ${{ secrets.AWS_REGION }} | docker login --username AWS --password-stdin ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com
+          aws ecr get-login-password --region ${{ secrets.AWS_REGION }} | \
+          docker login --username AWS --password-stdin ${{ secrets.ECR_REPOSITORY_URI }}
 
       # ✅ Build & Push Docker Image
       - name: 🐳 Build & Push Docker Image to ECR
@@ -60,25 +82,32 @@ jobs:
             --build-arg OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }} \
             -t my-app .
           
-          docker tag my-app:latest ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/my-app:latest
-          docker push ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/my-app:latest
+          docker tag my-app:latest ${{ secrets.ECR_REPOSITORY_URI }}:latest
+          docker push ${{ secrets.ECR_REPOSITORY_URI }}:latest
 
-      # ✅ Deploy to Elastic Beanstalk
-      - name: 📦 Deploy Docker Image to AWS Elastic Beanstalk
+      # ✅ Initialize Elastic Beanstalk
+      - name: 🏗️ Initialize Elastic Beanstalk
         run: |
           export PATH=$HOME/.local/bin:$PATH  # Ensure EB CLI is in PATH
           
           eb init ${{ secrets.EB_APPLICATION_NAME }} --region ${{ secrets.AWS_REGION }} --platform "Docker"
-          eb use ${{ secrets.EB_ENVIRONMENT_NAME }}
-          
+          eb use ${{ secrets.EB_ENV_NAME }}
+
+      # ✅ Set Environment Variables in Elastic Beanstalk
+      - name: 🔹 Set Backend Environment Variables in Elastic Beanstalk
+        run: |
           eb setenv REACT_APP_GOOGLE_PLACES_API_KEY=${{ secrets.REACT_APP_GOOGLE_PLACES_API_KEY }} \
                     REACT_APP_API_URL=${{ secrets.REACT_APP_API_URL }} \
                     OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}
 
+      # ✅ Deploy to AWS Elastic Beanstalk
+      - name: 🚀 Deploy to Elastic Beanstalk
+        run: |
+          sleep 60
           eb deploy
 
       # ✅ Fetch Logs for Debugging
-      - name: 🔍 Fetch Elastic Beanstalk Logs
+      - name: 📜 Fetch Elastic Beanstalk Logs
         run: |
           eb logs > eb-logs.txt
           cat eb-logs.txt
