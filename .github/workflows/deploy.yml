@@ -41,10 +41,10 @@ jobs:
           eb --version  # Verify EB CLI installation
 
       # ✅ Ensure ECR Repository Exists
-      - name: 🔹 Create ECR Repository If Not Exists
+      - name: 🔹 Ensure ECR Repository Exists
         run: |
           aws ecr describe-repositories --repository-names my-app || \
-          aws ecr create-repository --repository-name my-app
+          aws ecr create-repository --repository-name my-app || echo "Repository already exists."
 
       # ✅ Authenticate Docker with Amazon ECR
       - name: 🔹 Login to Amazon ECR
@@ -66,8 +66,8 @@ jobs:
       # ✅ Deploy to Elastic Beanstalk
       - name: 📦 Deploy Docker Image to AWS Elastic Beanstalk
         run: |
-          export PATH=$HOME/.local/bin:$PATH
-
+          export PATH=$HOME/.local/bin:$PATH  # Ensure EB CLI is in PATH
+          
           eb init ${{ secrets.EB_APPLICATION_NAME }} --region ${{ secrets.AWS_REGION }} --platform "Docker"
           eb use ${{ secrets.EB_ENVIRONMENT_NAME }}
           
