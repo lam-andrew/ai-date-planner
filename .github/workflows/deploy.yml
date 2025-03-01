@@ -91,7 +91,7 @@ jobs:
           export PATH=$HOME/.local/bin:$PATH  # Ensure EB CLI is in PATH
           
           eb init ${{ secrets.EB_APPLICATION_NAME }} --region ${{ secrets.AWS_REGION }} --platform "Docker"
-          eb use ${{ secrets.EB_ENV_NAME }}
+          eb use ${{ secrets.EB_ENVIRONMENT_NAME }}
 
       # ✅ Set Environment Variables in Elastic Beanstalk
       - name: 🔹 Set Backend Environment Variables in Elastic Beanstalk
