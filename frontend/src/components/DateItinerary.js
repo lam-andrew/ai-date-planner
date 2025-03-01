@@ -1,9 +1,9 @@
 import React from "react";
 import { Box, Typography, Divider, Card, CardContent, List, ListItem } from "@mui/material";
-import PlaceIcon from "@mui/icons-material/Place";  // 📍 Location Icon
-import RestaurantIcon from "@mui/icons-material/Restaurant"; // 🍽️ Restaurant Icon
-import StarIcon from "@mui/icons-material/Star"; // ⭐ Rating Icon
-import TipsAndUpdatesIcon from "@mui/icons-material/TipsAndUpdates"; // 💡 Tips Icon
+import PlaceIcon from "@mui/icons-material/Place";
+import RestaurantIcon from "@mui/icons-material/Restaurant";
+import StarIcon from "@mui/icons-material/Star";
+import TipsAndUpdatesIcon from "@mui/icons-material/TipsAndUpdates";
 
 const DateItinerary = ({ itineraryData }) => {
     if (!itineraryData || !Array.isArray(itineraryData.itinerary)) {

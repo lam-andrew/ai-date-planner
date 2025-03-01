@@ -156,7 +156,7 @@ def generate_ai_plan(places: list, preferences: DatePreferences) -> str:
                 "description": "Short description."
             }}
         ],
-        "tips": ["Tip 1", "Tip 2"]
+        "tips": ["Tip 1", "Tip 2", "etc."]
     }}
     """
 
@@ -171,9 +171,8 @@ def generate_ai_plan(places: list, preferences: DatePreferences) -> str:
         cleaned_json = re.sub(r"^```json\n|\n```$", "", raw_text)
 
         try:
-            parsed_response = json.loads(cleaned_json)  # ✅ Convert response to JSON
+            parsed_response = json.loads(cleaned_json)
         
-            # ✅ Ensure response has required fields
             if not isinstance(parsed_response, dict):
                 raise ValueError("OpenAI response is not a dictionary")
 
@@ -183,7 +182,7 @@ def generate_ai_plan(places: list, preferences: DatePreferences) -> str:
             if "tips" not in parsed_response or not isinstance(parsed_response["tips"], list):
                 parsed_response["tips"] = []  # Ensure `tips` is always a list
 
-            return parsed_response  # ✅ Now matches FastAPI model
+            return parsed_response
         except json.JSONDecodeError:
             return {"error": "Invalid JSON response from OpenAI"}
 
