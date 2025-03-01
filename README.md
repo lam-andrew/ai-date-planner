@@ -200,3 +200,45 @@ export default App;
 ```
 npm start
 ```
+
+
+# Cloud Deployment
+
+Automated Deployment with GitHub Actions to AWS Elastic Beanstalk
+Set up GitHub Actions to automatically deploy Dockerized Full-Stack (React + FastAPI) application to AWS Elastic Beanstalk.
+
+**Step 1️⃣: Create an AWS Elastic Beanstalk Environment**
+- Login to AWS Console.
+- Navigate to Elastic Beanstalk.
+- Click Create a new application.
+- Choose Docker as the platform.
+- Click Create Environment.
+- Copy the application name and environment name (you’ll need them for GitHub Actions).
+
+**Step 2️⃣: Configure AWS Credentials in GitHub**
+Go to your GitHub repository.
+
+Click on Settings → Secrets and variables → Actions.
+
+Added the following secrets:
+- Secret Name	Value (From AWS)
+- `AWS_ACCESS_KEY_ID`	Your AWS IAM Access Key
+- `AWS_SECRET_ACCESS_KEY`	Your AWS IAM Secret Key
+- `AWS_REGION`	Your AWS region (e.g., us-east-1)
+- `EB_APPLICATION_NAME`	 Elastic Beanstalk application name
+- `EB_ENVIRONMENT_NAME`	 Elastic Beanstalk environment name
+
+**Step 3️⃣: Create a .github/workflows/deploy.yml File**
+Inside repo, created the folder `.github/workflows/` and added a new file `deploy.yml`.
+
+**Step 4️⃣: Push Your Changes to GitHub**
+Commit and push files:
+```
+git add .
+git commit -m "commit message here"
+git push origin main
+```
+
+**Step 5️⃣: Verify Deployment**
+Go to GitHub Actions → Your Workflow.
+Click on the running workflow to see the logs.

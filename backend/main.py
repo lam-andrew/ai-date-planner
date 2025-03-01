@@ -3,6 +3,7 @@ import json
 import os
 import re
 from fastapi import FastAPI
+from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 import requests
 import openai
@@ -23,6 +24,9 @@ app = FastAPI(
         "email": "your.email@example.com",
     }
 )
+
+# Serve React Frontend
+app.mount("/", StaticFiles(directory="frontend/build", html=True), name="frontend")
 
 # Enable CORS
 app.add_middleware(
