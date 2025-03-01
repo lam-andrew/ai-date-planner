@@ -79,6 +79,7 @@ jobs:
           docker buildx build --platform linux/amd64 \
             --build-arg REACT_APP_GOOGLE_PLACES_API_KEY=${{ secrets.REACT_APP_GOOGLE_PLACES_API_KEY }} \
             --build-arg REACT_APP_API_URL=${{ secrets.REACT_APP_API_URL }} \
+            --build-arg GOOGLE_PLACES_API_KEY=${{ secrets.GOOGLE_PLACES_API_KEY }} \
             --build-arg OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }} \
             -t my-app .
           
@@ -98,6 +99,7 @@ jobs:
         run: |
           eb setenv REACT_APP_GOOGLE_PLACES_API_KEY=${{ secrets.REACT_APP_GOOGLE_PLACES_API_KEY }} \
                     REACT_APP_API_URL=${{ secrets.REACT_APP_API_URL }} \
+                    GOOGLE_PLACES_API_KEY=${{ secrets.GOOGLE_PLACES_API_KEY }} \
                     OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}
 
       # ✅ Deploy to AWS Elastic Beanstalk
