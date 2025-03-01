@@ -1,7 +1,8 @@
 import React, { useState, useRef } from "react";
-import { TextField, Button, Chip, Slider, Stepper, Step, StepLabel, Box } from "@mui/material";
+import { TextField, Button, Chip, Slider, Stepper, Step, StepLabel, Box, CircularProgress } from "@mui/material";
 import { Autocomplete } from "@react-google-maps/api";
 import { generateDatePlan } from "../api";
+import DateItinerary from "./DateItinerary"; // Import the new component for structured display
 
 const dateTypes = ["Romantic", "Casual", "First Date", "Anniversary"];
 
@@ -30,8 +31,9 @@ const DatePlannerForm = () => {
         budget: 50
     });
 
-    const [itinerary, setItinerary] = useState("");
+    const [itineraryData, setItineraryData] = useState(null); // Store JSON response from API
     const [loading, setLoading] = useState(false);
+    const [error, setError] = useState(null);
     const autocompleteRef = useRef(null);
 
     // Handle Location Selection
@@ -77,9 +79,22 @@ const DatePlannerForm = () => {
     // Submit the Form
     const handleSubmit = async () => {
         setLoading(true);
-        const response = await generateDatePlan(formData);
-        setItinerary(response.itinerary);
-        setLoading(false);
+        setError(null);
+        setItineraryData(null); // Reset previous itinerary
+
+        try {
+            const response = await generateDatePlan(formData);
+            
+            if (response && response.itinerary && Array.isArray(response.itinerary)) {
+                setItineraryData(response);
+            } else {
+                throw new Error("Invalid response format");
+            }
+        } catch (err) {
+            setError("Failed to generate the itinerary. Please try again.");
+        } finally {
+            setLoading(false);
+        }
     };
 
     return (
@@ -182,14 +197,9 @@ const DatePlannerForm = () => {
                 {activeStep === 5 && <Button onClick={handleSubmit} variant="contained" color="primary">Generate Plan</Button>}
             </Box>
 
-            {loading && <p>Generating your perfect date plan... ⏳</p>}
-
-            {itinerary && (
-                <Box sx={{ mt: 3, p: 2, border: "1px solid gray", borderRadius: "5px" }}>
-                    <h3>Your AI-Generated Itinerary:</h3>
-                    <pre>{itinerary}</pre>
-                </Box>
-            )}
+            {loading && <CircularProgress sx={{ mt: 2 }} />}
+            {error && <p style={{ color: "red" }}>{error}</p>}
+            {itineraryData && <DateItinerary itineraryData={itineraryData} />}
         </Box>
     );
 };
