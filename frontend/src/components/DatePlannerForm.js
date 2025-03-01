@@ -1,5 +1,5 @@
 import React, { useState, useRef } from "react";
-import { TextField, Button, Chip, Slider, Stepper, Step, StepLabel, Box, CircularProgress, Card, CardContent, Typography, Grid } from "@mui/material";
+import { TextField, Button, Chip, Stepper, Step, StepLabel, Box, CircularProgress, Card, CardContent, Typography, Grid } from "@mui/material";
 import { Autocomplete } from "@react-google-maps/api";
 import { generateDatePlan } from "../api";
 import DateItinerary from "./DateItinerary";
