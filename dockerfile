@@ -26,7 +26,10 @@ COPY backend .
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Set environment variables for FastAPI
-ENV OPENAI_API_KEY=${OPENAI_API_KEY}
+ARG GOOGLE_PLACES_API_KEY
+ARG OPENAI_API_KEY
+ENV GOOGLE_PLACES_API_KEY=$GOOGLE_PLACES_API_KEY
+ENV OPENAI_API_KEY=$OPENAI_API_KEY
 
 # Step 3: Run FastAPI Backend and Serve Frontend
 CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]

@@ -7,7 +7,7 @@ import TipsAndUpdatesIcon from "@mui/icons-material/TipsAndUpdates";
 
 const DateItinerary = ({ itineraryData }) => {
     if (!itineraryData || !Array.isArray(itineraryData.itinerary)) {
-        return <Typography variant="body1" sx={{ textAlign: "center", mt: 3 }}>No itinerary available.</Typography>;
+        return <Typography variant="body1" sx={{ textAlign: "center", mt: 3 }}>Oops! Something went wrong.</Typography>;
     }
 
     return (

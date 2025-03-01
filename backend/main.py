@@ -125,13 +125,13 @@ def fetch_places(latitude: float, longitude: float, category: str, radius: int =
         return []
 
 
-def generate_ai_plan(places: list, preferences: DatePreferences) -> str:
+def generate_ai_plan(places: list, preferences: DatePreferences) -> dict:
     """
     Generates a structured date itinerary using OpenAI's GPT-4.
 
     :param places: List of available places fetched from Google Places API
     :param preferences: User's date preferences
-    :return: AI-generated date itinerary (formatted as text)
+    :return: AI-generated structured itinerary or an error message
     """
     prompt = f"""
     Generate a structured date itinerary based on the following preferences:
@@ -193,8 +193,7 @@ def generate_ai_plan(places: list, preferences: DatePreferences) -> str:
             return {"error": "Invalid JSON response from OpenAI"}
 
     except Exception as e:
-        print(f"OpenAI API Error: {e}")
-        return "Error generating AI itinerary. Please try again later."
+        return {"error": f"OpenAI API Error: {str(e)}"}
 
 
 def get_lat_long(location: str):
@@ -236,6 +235,7 @@ async def generate_date_plan(preferences: DatePreferences):
 
     latitude, longitude = coordinates
     print(f"COORDINATES: {latitude}, {longitude}")
+
     # Step 2: Fetch places for different categories
     restaurants = fetch_places(latitude, longitude, preferences.food_preferences[0])  # e.g. "cafe", "bar"
     activities = fetch_places(latitude, longitude, preferences.activity_preferences[0])  # e.g. "museum", "park"
@@ -243,10 +243,14 @@ async def generate_date_plan(preferences: DatePreferences):
     # Step 3: Combine results
     places = restaurants + activities
     print(f"PLACES: {places}")
+
     # Step 4: Generate AI-powered itinerary
     ai_plan = generate_ai_plan(places, preferences)
     print(f"AI PLAN: {ai_plan}")
-    if not isinstance(ai_plan, dict) or "itinerary" not in ai_plan or "tips" not in ai_plan:
+
+    if "error" in ai_plan:
+        raise HTTPException(status_code=500, detail=ai_plan["error"])
+    elif not isinstance(ai_plan, dict) or "itinerary" not in ai_plan or "tips" not in ai_plan:
         raise HTTPException(status_code=500, detail="Invalid AI response format")
 
     return ai_plan
