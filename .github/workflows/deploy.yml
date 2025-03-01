@@ -14,13 +14,13 @@ jobs:
       - name: 🚀 Checkout Repository
         uses: actions/checkout@v4
 
-      # ✅ Install AWS CLI
-      - name: 🔹 Install AWS CLI
+      # ✅ Fix AWS CLI Install & Dependency Issues
+      - name: 🔹 Install & Fix AWS CLI Dependencies
         run: |
           sudo apt update
           sudo apt install -y python3-pip
-          python3 -m pip install --upgrade pip
-          python3 -m pip install awscli --upgrade --user
+          python3 -m pip install --upgrade pip setuptools wheel
+          python3 -m pip install --upgrade awscli botocore s3transfer
           echo "$HOME/.local/bin" >> $GITHUB_PATH
           aws --version
 
