@@ -234,7 +234,6 @@ async def generate_date_plan(preferences: DatePreferences):
         return {"itinerary": "Error: Unable to fetch location coordinates. Please check the location input."}
 
     latitude, longitude = coordinates
-    print(f"COORDINATES: {latitude}, {longitude}")
 
     # Step 2: Fetch places for different categories
     restaurants = fetch_places(latitude, longitude, preferences.food_preferences[0])  # e.g. "cafe", "bar"
@@ -242,11 +241,9 @@ async def generate_date_plan(preferences: DatePreferences):
 
     # Step 3: Combine results
     places = restaurants + activities
-    print(f"PLACES: {places}")
 
     # Step 4: Generate AI-powered itinerary
     ai_plan = generate_ai_plan(places, preferences)
-    print(f"AI PLAN: {ai_plan}")
 
     if "error" in ai_plan:
         raise HTTPException(status_code=500, detail=ai_plan["error"])
