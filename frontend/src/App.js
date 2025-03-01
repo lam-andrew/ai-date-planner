@@ -9,10 +9,10 @@ const GOOGLE_MAPS_API_KEY = process.env.REACT_APP_GOOGLE_PLACES_API_KEY;
 const theme = createTheme({
     palette: {
         primary: {
-            main: "#ff4d6d",
+            main: "#ff889d",
         },
         secondary: {
-            main: "#5e35b1",
+            main: "#9d7fdb",
         },
         background: {
             default: "#f4f5f7",
@@ -50,7 +50,7 @@ function App() {
             <LoadScript googleMapsApiKey={GOOGLE_MAPS_API_KEY} libraries={["places"]}>
                 <Container maxWidth="md" sx={{ textAlign: "center", mt: 4 }}>
                     <Typography variant="h3" sx={{ fontWeight: "bold", color: "primary.main", mb: 2 }}>
-                        Perfect Date Planner 💕
+                    💕 Perfect Date Planner 💕
                     </Typography>
                     <DatePlannerForm />
                 </Container>
