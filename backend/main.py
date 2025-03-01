@@ -2,7 +2,7 @@ from http.client import HTTPException
 import json
 import os
 import re
-from fastapi import FastAPI
+from fastapi import FastAPI, APIRouter
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 import requests
@@ -19,14 +19,16 @@ app = FastAPI(
     title="Perfect Date Planner API",
     description="An API that generates AI-powered date plans based on location, budget, and preferences.",
     version="1.0",
-    contact={
-        "name": "Your Name",
-        "email": "your.email@example.com",
-    }
+    openapi_url="/api/openapi.json",
+    docs_url="/api/docs",
+    redoc_url="/api/redoc"
 )
 
-# Serve React Frontend
-app.mount("/", StaticFiles(directory="frontend/build", html=True), name="frontend")
+api_router = APIRouter(prefix="/api")
+
+@api_router.get("/health")
+def health_check():
+    return {"status": "ok"}
 
 # Enable CORS
 app.add_middleware(
@@ -214,7 +216,7 @@ def get_lat_long(location: str):
     return None
 
 
-@app.post("/generate-date-plan/", response_model=DatePlanResponse, tags=["Date Planning"])
+@api_router.post("/generate-date-plan/", response_model=DatePlanResponse, tags=["Date Planning"])
 async def generate_date_plan(preferences: DatePreferences):
     """
     Generate an AI-powered date plan based on user preferences.
@@ -233,18 +235,24 @@ async def generate_date_plan(preferences: DatePreferences):
         return {"itinerary": "Error: Unable to fetch location coordinates. Please check the location input."}
 
     latitude, longitude = coordinates
-
+    print(f"COORDINATES: {latitude}, {longitude}")
     # Step 2: Fetch places for different categories
     restaurants = fetch_places(latitude, longitude, preferences.food_preferences[0])  # e.g. "cafe", "bar"
     activities = fetch_places(latitude, longitude, preferences.activity_preferences[0])  # e.g. "museum", "park"
 
     # Step 3: Combine results
     places = restaurants + activities
-
+    print(f"PLACES: {places}")
     # Step 4: Generate AI-powered itinerary
     ai_plan = generate_ai_plan(places, preferences)
-    
+    print(f"AI PLAN: {ai_plan}")
     if not isinstance(ai_plan, dict) or "itinerary" not in ai_plan or "tips" not in ai_plan:
         raise HTTPException(status_code=500, detail="Invalid AI response format")
 
     return ai_plan
+
+
+app.include_router(api_router)
+
+# Serve React Frontend
+app.mount("/", StaticFiles(directory="frontend/build", html=True), name="frontend")

@@ -18,16 +18,15 @@ RUN npm run build
 FROM python:3.11 AS backend
 
 WORKDIR /app
-COPY backend/requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
-
-COPY backend ./
 
 # Copy built frontend into backend static directory
 COPY --from=frontend-builder /app/frontend/build ./frontend/build
+
+COPY backend .
+RUN pip install --no-cache-dir -r requirements.txt
 
 # Set environment variables for FastAPI
 ENV OPENAI_API_KEY=${OPENAI_API_KEY}
 
 # Step 3: Run FastAPI Backend and Serve Frontend
-CMD uvicorn main:app --host 0.0.0.0 --port 8000
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
