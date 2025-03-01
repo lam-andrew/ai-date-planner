@@ -14,7 +14,7 @@ jobs:
       - name: 🚀 Checkout Repository
         uses: actions/checkout@v4
 
-      # ✅ Install AWS CLI using pip
+      # ✅ Install AWS CLI
       - name: 🔹 Install AWS CLI
         run: |
           sudo apt update
@@ -31,6 +31,14 @@ jobs:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ secrets.AWS_REGION }}
+
+      # ✅ Install AWS Elastic Beanstalk CLI
+      - name: 🔹 Install AWS EB CLI
+        run: |
+          sudo apt update && sudo apt install -y python3-pip
+          python3 -m pip install awsebcli --upgrade --user
+          echo "$HOME/.local/bin" >> $GITHUB_PATH
+          eb --version  # Verify EB CLI installation
 
       # ✅ Ensure ECR Repository Exists
       - name: 🔹 Create ECR Repository If Not Exists
@@ -58,6 +66,8 @@ jobs:
       # ✅ Deploy to Elastic Beanstalk
       - name: 📦 Deploy Docker Image to AWS Elastic Beanstalk
         run: |
+          export PATH=$HOME/.local/bin:$PATH
+
           eb init ${{ secrets.EB_APPLICATION_NAME }} --region ${{ secrets.AWS_REGION }} --platform "Docker"
           eb use ${{ secrets.EB_ENVIRONMENT_NAME }}
           
